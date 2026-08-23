@@ -9,7 +9,7 @@ app.get('/', (req, res) => {
     res.send('Pana-Bot D-9 activo B)');
 });
 
-app.listen(PORT, () => {
+app.listen(PORT,'0.0.0.0', () => {
     console.log(`Servidor HTTP en puerto ${PORT}`);
 });
 
