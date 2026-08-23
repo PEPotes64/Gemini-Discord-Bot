@@ -73,3 +73,15 @@ if (!fs.existsSync(configPath)) {
 
 // Dynamically import the main application entry point
 await import('./src/startup/main.js');
+
+import http from 'node:http';
+
+const PORT = process.env.PORT || 10000;
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('¡El Franki-bot sigue vivo en Discord, mi Peps!\n');
+});
+
+server.listen(PORT, () => {
+    console.log(`Servidor web falso escuchando en el puerto ${PORT}`);
+});
