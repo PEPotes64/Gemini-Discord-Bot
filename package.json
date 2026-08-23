@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "express": "^4.19.2",
     "@google/genai": "^1.45.0",
     "axios": "^1.13.6",
     "discord.js": "^14.25.1",
