@@ -25,7 +25,7 @@ const config = Object.freeze({
   defaultModel: 'gemini-1.5-flash',
   nanoBananaModel: 'gemini-2.5-flash-image',
   enableNanoBananaMode: false,
-  maxGenerationAttempts: 3,
+  maxGenerationAttempts: 1,
   defaultResponseFormat: 'Embedded',
   defaultResponseActionButtons: true,
   hexColour: '#505050',
@@ -45,8 +45,8 @@ const config = Object.freeze({
       type: 'Listening',
     },
     {
-      name: 'You',
-      type: 'Watching',
+      name: 'Chicos estoy comiendo mortadela',
+      type: 'Un enemigo de Fornite',
     },
   ],
   defaultServerSettings: {
