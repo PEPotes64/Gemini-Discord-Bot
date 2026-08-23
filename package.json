@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "express": "^4.19.2",
-    "@google/generative-ai": "^1.45.0",
+    "@google/generative-ai": "latest",
     "axios": "^1.13.6",
     "discord.js": "^14.25.1",
     "dotenv": "^17.3.1",
