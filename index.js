@@ -1,3 +1,16 @@
+import http from 'node:http';
+
+const PORT = process.env.PORT || 10000;
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('¡El Franki-bot sigue vivo en Discord, mi Peps!\n');
+});
+
+server.listen(PORT, () => {
+    console.log(`Servidor web falso escuchando en el puerto ${PORT}`);
+});
+
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +22,7 @@ const configPath = path.join(__dirname, 'config.js');
 
 const defaultConfig = `// For advanced configuration, edit \`constants.js\`.
 const config = Object.freeze({
-  defaultModel: 'gemini-flash-lite-latest',
+  defaultModel: 'gemini-1.5-flash',
   nanoBananaModel: 'gemini-2.5-flash-image',
   enableNanoBananaMode: false,
   maxGenerationAttempts: 3,
@@ -63,7 +76,7 @@ const config = Object.freeze({
 });
 
 export default config;
-`;
+
 
 if (!fs.existsSync(configPath)) {
   console.log('config.js not found. Creating default configuration...');
@@ -73,15 +86,3 @@ if (!fs.existsSync(configPath)) {
 
 // Dynamically import the main application entry point
 await import('./src/startup/main.js');
-
-import http from 'node:http';
-
-const PORT = process.env.PORT || 10000;
-const server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('¡El Franki-bot sigue vivo en Discord, mi Peps!\n');
-});
-
-server.listen(PORT, () => {
-    console.log(`Servidor web falso escuchando en el puerto ${PORT}`);
-});
