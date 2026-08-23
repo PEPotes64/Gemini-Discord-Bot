@@ -1,88 +1,67 @@
-import http from 'node:http';
+const express = require('express');
+const { Client, GatewayIntentBits } = require('discord.js');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const PORT = process.env.PORT || 10000;
-const server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('¡El Franki-bot sigue vivo en Discord, mi Peps!\n');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// 1. Servidor HTTP falso para mantener vivo a Render desde el segundo uno
+app.get('/', (req, res) => {
+    res.send('Pana-Bot D-8 está activo y operando con estilo B)');
 });
 
-server.listen(PORT, () => {
-    console.log(`Servidor web falso escuchando en el puerto ${PORT}`);
+app.listen(PORT, () => {
+    console.log(`Servidor HTTP corriendo en el puerto ${PORT}`);
 });
 
-
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const configPath = path.join(__dirname, 'config.js');
-
-const defaultConfig = `// For advanced configuration, edit \`constants.js\`.
-const config = Object.freeze({
-  defaultModel: 'gemini-1.5-flash',
-  nanoBananaModel: 'gemini-2.5-flash-image',
-  enableNanoBananaMode: false,
-  maxGenerationAttempts: 1,
-  defaultResponseFormat: 'Embedded',
-  defaultResponseActionButtons: true,
-  hexColour: '#505050',
-  workInDMs: true,
-  shouldDisplayPersonalityButtons: true,
-  enableGeminiApiLogging: false,
-  SEND_RETRY_ERRORS_TO_DISCORD: true,
-  defaultPersonality:
-    "You are Gemini, a large language model trained by Google.",
-  activities: [
-    {
-      name: 'With Code',
-      type: 'Playing',
-    },
-    {
-      name: 'Something',
-      type: 'Listening',
-    },
-    {
-      name: 'Chicos estoy comiendo mortadela',
-      type: 'Un enemigo de Fornite',
-    },
-  ],
-  defaultServerSettings: {
-    serverChatHistory: false,
-    customServerPersonality: false,
-    settingsSaveButton: 'decide',
-    responseStyle: 'decide',
-  },
-  defaultChannelSettings: {
-    alwaysRespond: false,
-    channelWideChatHistory: false,
-    customChannelPersonality: false,
-    settingsSaveButton: 'decide',
-    responseStyle: 'decide',
-  },
-  defaultGeminiToolPreferences: {
-    googleSearch: true,
-    urlContext: true,
-    codeExecution: false,
-  },
-  chatHistoryLimits: {
-    users: 10,
-    servers: 12,
-    channels: 15,
-  },
-  recentChannelMessagesLimit: 15,
+// 2. Configuración del cliente de Discord
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
 });
 
-export default config;
+// 3. Inicialización de la API de Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+client.once('ready', () => {
+    console.log(`¡Pana-Bot D-8 conectado como ${client.user.tag}!`);
+    // Aquí puedes intentar poner el estado personalizado si te deja la librería
+    client.user.setActivity('Comiendo mortadela xd');
+});
 
-if (!fs.existsSync(configPath)) {
-  console.log('config.js not found. Creating default configuration...');
-  fs.writeFileSync(configPath, defaultConfig);
-  console.log('Default config.js created.');
-}
+// 4. Manejador de mensajes blindado contra caídas
+client.on('messageCreate', async (message) => {
+    if (message.author.bot) return;
 
-// Dynamically import the main application entry point
-await import('./src/startup/main.js');
+    // Solo responde si lo mencionan o en un canal específico
+    if (!message.content.includes(client.user.id)) return;
+
+    try {
+        await message.channel.sendTyping();
+
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
+
+        // Intento único y controlado
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        await message.reply(text);
+
+    } catch (error) {
+        console.error("Error al procesar con Gemini:", error);
+        
+        if (error.status === 429) {
+            await message.reply("Efe mi gente, la llave de la API se quedó sin cuota (Error 429). Toca esperar un momento o cambiar de key xd.");
+        } else {
+            await message.reply("Me dio un calambre mental procesando eso, carnal. Inténtalo de nuevo más tarde > < :v");
+        }
+    }
+});
+
+client.login(process.env.DISCORD_TOKEN);
+
