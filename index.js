@@ -34,7 +34,7 @@ client.on('messageCreate', async (message) => {
     try {
         await message.channel.sendTyping();
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
         const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
 
         const result = await model.generateContent(prompt);
