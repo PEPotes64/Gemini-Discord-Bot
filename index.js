@@ -43,15 +43,15 @@ client.on('messageCreate', async (message) => {
 
         await message.reply(text);
 
-    } catch (error) {
-        console.error("Error con Gemini:", error);
-        
-        if (error.status === 429) {
-            await message.reply("Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva key xd.");
-        } else {
-            await message.reply("Me dio un calambre mental procesando eso, carnal > < :v");
-        }
+} catch (error) {
+    console.error("EL ERROR REAL ES:", error);
+    
+    if (error.status === 429) {
+        await message.reply("Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva");
+    } else {
+        await message.reply(`Callate pepo, por esto eres un naco y estupido: ${error.message || error}`);
     }
-});
+}
+
 
 client.login(process.env.DISCORD_TOKEN);
