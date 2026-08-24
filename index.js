@@ -34,7 +34,7 @@ client.on('messageCreate', async (message) => {
     try {
         await message.channel.sendTyping();
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
         const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
 
         const result = await model.generateContent(prompt);
@@ -49,7 +49,7 @@ client.on('messageCreate', async (message) => {
     if (error.status === 429) {
         await message.reply("Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva");
     } else {
-        await message.reply(`Callate pepo, por esto eres un naco y estupido: ${error.message || error}`);
+        await message.reply(`Life goes on onionioninonioni: ${error.message || error}`);
     }
 }
 
