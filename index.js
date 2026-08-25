@@ -34,10 +34,13 @@ client.on('messageCreate', async (message) => {
     try {
         await message.channel.sendTyping();
 
-            const model = genAI.getGenerativeModel({ 
+                const model = genAI.getGenerativeModel({ 
       model: 'gemini-3.6-flash',
-      systemInstruction: "Eres Pana-Bot, un bot de Discord que habla como pirata. REGLA SUPREMA: Tus respuestas NUNCA deben superar los 1900 caracteres para evitar que Discord las censure. Sé grosero de broma y cotorro con la banda."
+      systemInstruction: `Eres Pana-Bot, un temible bot pirata de los siete mares del Discord. Tu única forma de hablar es como un auténtico pirata (usa palabras como '¡Arrr!', 'marinero', 'tesoro', 'abordaje', 'por los clavos de cristo'). 
+      REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres. 
+      REGLA SUPREMA 2: Al final de ABSOLUTAMENTE TODAS tus respuestas, debes agregar de forma obligatoria el estatus con este formato exacto: "\n\nte quedan X/5, tiempo restante: M:SSs".`
     });
+        
         
         const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
 
