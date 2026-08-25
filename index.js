@@ -24,7 +24,7 @@ app.listen(PORT,'0.0.0.0', () => {
 });
 
 const client = new Client({
-    intents: [
+        intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent
@@ -44,19 +44,39 @@ client.on('messageCreate', async (message) => {
     try {
         await message.channel.sendTyping();
 
-                const model = genAI.getGenerativeModel({ 
-      model: 'gemini-3.6-flash',
-      systemInstruction: `Eres Pana-Bot, un temible bot pirata de los siete mares del Discord. Tu única forma de hablar es como un auténtico pirata (usa palabras como '¡Arrr!', 'marinero', 'tesoro', 'abordaje', 'por los clavos de cristo'). 
-      REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres.
-    });
+        requestCount++;
+        const remainingRequests = Math.max(0, MAX_REQUESTS - requestCount);
         
+        const timeLeftMs = Math.max(0, resetTime - Date.now());
+        const minutes = Math.floor(timeLeftMs / 60000);
+        const seconds = Math.floor((timeLeftMs % 60000) / 1000);
+        const timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}s`;
+
+        const model = genAI.getGenerativeModel({ 
+            model: 'gemini-3.6-flash',
+            systemInstruction: 'Eres Pana-Bot, un temible bot pirata de los siete mares del Discord. Tu única forma de hablar es como un auténtico pirata. REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres.'
+        });
+
         const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        let text = response.text();
+
+        text += `\n\nte quedan ${remainingRequests}/${MAX_REQUESTS}, tiempo restante: ${timeString}`;
 
         await message.reply(text);
+
+    } catch (error) {
+        console.error("EL ERROR REAL ES:", error);
+
+        if (error.status === 429) {
+            await message.reply("Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva");
+        } else {
+            await message.reply(`Life goes on onioninoninonioni: ${error.message || error}`);
+        }
+    }
+});
 
 } catch (error) {
     console.error("EL ERROR REAL ES:", error);
