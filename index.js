@@ -1,4 +1,14 @@
 const express = require('express');
+let requestCount = 0;
+const MAX_REQUESTS = 5;
+let resetTime = Date.now() + 60000; // 1 minuto a partir de ahora
+
+// El relojito resetea el contador cada 1 minuto exacto
+setInterval(() => {
+  requestCount = 0;
+  resetTime = Date.now() + 60000;
+}, 60000);
+
 const { Client, GatewayIntentBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -37,10 +47,8 @@ client.on('messageCreate', async (message) => {
                 const model = genAI.getGenerativeModel({ 
       model: 'gemini-3.6-flash',
       systemInstruction: `Eres Pana-Bot, un temible bot pirata de los siete mares del Discord. Tu única forma de hablar es como un auténtico pirata (usa palabras como '¡Arrr!', 'marinero', 'tesoro', 'abordaje', 'por los clavos de cristo'). 
-      REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres. 
-      REGLA SUPREMA 2: Al final de ABSOLUTAMENTE TODAS tus respuestas, debes agregar de forma obligatoria el estatus con este formato exacto: "\n\nte quedan X/5, tiempo restante: M:SSs".`
+      REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres.
     });
-        
         
         const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
 
