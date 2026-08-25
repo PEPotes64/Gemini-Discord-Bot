@@ -77,17 +77,3 @@ client.on('messageCreate', async (message) => {
         }
     }
 });
-
-} catch (error) {
-    console.error("EL ERROR REAL ES:", error);
-    
-    if (error.status === 429) {
-        await message.reply("Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva");
-    } else {
-        await message.reply(`Life goes on onionioninonioni: ${error.message || error}`);
-    }
-}
-
-});
-
-client.login(process.env.DISCORD_TOKEN);
