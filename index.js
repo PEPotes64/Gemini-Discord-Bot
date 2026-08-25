@@ -44,14 +44,21 @@ client.on('messageCreate', async (message) => {
     try {
         await message.channel.sendTyping();
 
+        // Verificamos si ya pasó el minuto para resetear el reloj
+        const ahora = Date.now();
+        if (ahora >= resetTime) {
+            requestCount = 0;
+            resetTime = ahora + 60000;
+        }
+
         requestCount++;
         const remainingRequests = Math.max(0, MAX_REQUESTS - requestCount);
         
-        const timeLeftMs = Math.max(0, resetTime - Date.now());
+        const timeLeftMs = Math.max(0, resetTime - ahora);
         const minutes = Math.floor(timeLeftMs / 60000);
         const seconds = Math.floor((timeLeftMs % 60000) / 1000);
         const timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}s`;
-
+      
         const model = genAI.getGenerativeModel({ 
             model: 'gemini-3.6-flash',
             systemInstruction: 'Eres Pana-Bot, un temible bot pirata de los siete mares del Discord. Tu única forma de hablar es como un auténtico pirata. REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres.'
