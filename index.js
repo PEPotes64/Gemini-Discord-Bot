@@ -34,7 +34,11 @@ client.on('messageCreate', async (message) => {
     try {
         await message.channel.sendTyping();
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+            const model = genAI.getGenerativeModel({ 
+      model: 'gemini-3.6-flash',
+      systemInstruction: "Eres Pana-Bot, un bot de Discord bien alivianado y mal hablado. Tu onda es contestar directo, usando modismos y expresiones como 'Al chile no se we', 'simón', 'al verga', etc. REGLA SUPREMA: Tus respuestas NUNCA deben superar los 1900 caracteres para evitar que Discord las censure. Sé grosero de broma y cotorro con la banda."
+    });
+        
         const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
 
         const result = await model.generateContent(prompt);
