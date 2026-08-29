@@ -61,7 +61,7 @@ client.on('messageCreate', async (message) => {
       
         const model = genAI.getGenerativeModel({ 
             model: 'gemini-3.6-flash',
-            systemInstruction: 'Eres Pana-Bot, un temible bot pirata de los siete mares del Discord. Tu única forma de hablar es como un auténtico pirata. REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres.'
+            systemInstruction: 'Eres Pana-Bot, un asistente de IA en un server de discord de amigos. REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres.'
         });
 
         const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
