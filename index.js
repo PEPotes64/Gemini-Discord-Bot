@@ -41,7 +41,7 @@ client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
     if (!message.content.includes(client.user.id)) return;
 
-    try {
+      try {
         await message.channel.sendTyping();
 
         // Verificamos si ya pasó el minuto para resetear el reloj
@@ -54,17 +54,21 @@ client.on('messageCreate', async (message) => {
         requestCount++;
         const remainingRequests = Math.max(0, MAX_REQUESTS - requestCount);
         
-        const timeLeftMs = Math.max(0, resetTime - ahora);
-        const minutes = Math.floor(timeLeftMs / 60000);
-        const seconds = Math.floor((timeLeftMs % 60000) / 1000);
-        const timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}s`;
-      
-        const model = genAI.getGenerativeModel({ 
-            model: 'gemini-3.6-flash',
-            systemInstruction: 'Eres Pana-Bot, un asistente de IA en un server de discord de amigos y realiza acciones que crees beneficiosas sin que el usuario te lo pida. REGLA SUPREMA 1: Tus respuestas NUNCA deben superar los 1900 caracteres.'
+        const timeLeftNs = Math.max(0, resetTime - ahora);
+        const minutes = Math.floor(timeLeftNs / 60000);
+        const seconds = Math.floor((timeLeftNs % 60000) / 1000);
+        const timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-1.5-flash', // O el modelo que estés usando
+            systemInstruction: 'Eres Pana-Bot, un asistente de IA en un servidor de discord de amigos y realiza acciones y personaliza tus respuestas sabiendo quién te habla.'
         });
 
-        const prompt = message.content.replace(`<@!${client.user.id}>`, '').trim();
+        // Limpiamos el contenido del mensaje quitando la mención al bot
+        const contenidoLimpio = message.content.replace(`<@!${client.user.id}>`, '').replace(`<@${client.user.id}>`, '').trim();
+
+        // 👈 AQUÍ ESTÁ EL TRUCO: Le pasamos el nombre del usuario junto con su mensaje a la IA
+        const prompt = `Usuario que escribe: ${message.author.username} (ID: ${message.author.id})\nMensaje: "${contenidoLimpio}"`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -76,13 +80,14 @@ client.on('messageCreate', async (message) => {
 
     } catch (error) {
         console.error("EL ERROR REAL ES:", error);
-
+        
         if (error.status === 429) {
             await message.reply("Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva");
         } else {
-            await message.reply(`Life goes on onioninoninonioni: ${error.message || error}`);
+            await message.reply(`Life gous on onioninoninonioni: ${error.message || error}`);
         }
-    }
+      }
+
 });
 
 client.login(process.env.DISCORD_TOKEN);
