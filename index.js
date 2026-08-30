@@ -73,11 +73,28 @@ client.on('messageCreate', async (message) => {
         const descripcionPana = perfilesPanas[usernameKey] || "Es un miembro casual del servidor de amigos.";
         const apodoServidor = message.member ? message.member.displayName : message.author.username;
 
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-3.5-flash',
-            systemInstruction: 'Eres Pana-Bot, un asistente de IA en un servidor de Discord de amigos. Tu meta es responder siempre usando el apodo oficial del usuario y adaptando tu tono a su descripción.'
-        });
+const tools = [{
+    functionDeclarations: [
+        {
+            name: "crearCanalTexto",
+            description: "Crea un nuevo canal de texto en el servidor de Discord.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    nombre: { type: "STRING", description: "El nombre que tendrá el canal de texto." }
+                },
+                required: ["nombre"]
+            }
+        }
+    ]
+}];
 
+const model = genAI.getGenerativeModel({
+    model: 'gemini-3.5-flash',
+    tools: tools, // <-- Aquí le metemos los superpoderes
+    systemInstruction: 'Eres Pana-Bot, un asistente con permisos de administración en Discord.'
+});
+        
         const contenidoLimpio = message.content.replace(`<@!${client.user.id}>`, '').replace(`<@${client.user.id}>`, '').trim();
         
         const prompt = `Estás hablando con un compa del server:
@@ -88,14 +105,32 @@ client.on('messageCreate', async (message) => {
 Instrucción: Respóndele a "${apodoServidor}" adaptando tu personalidad basándote en su descripción para que le encante.
 Mensaje: "${contenidoLimpio}"`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = response.text();
+            const result = await model.generateContent(prompt);
+    const response = await result.response;
+
+    // Vemos si la IA quiso usar alguna herramienta
+    const functionCalls = response.functionCalls ? response.functionCalls() : null;
+
+    if (functionCalls && functionCalls.length > 0) {
+        const call = functionCalls[0];
         
+        if (call.name === "crearCanalTexto") {
+            const nombreCanal = call.args.nombre;
+            
+            // Creamos el canal real en el server de Discord
+            await message.guild.channels.create({
+                name: nombreCanal,
+                type: 0 // Canal de texto
+            });
 
-        text += `\n\nte quedan ${remainingRequests}/${MAX_REQUESTS}, tiempo restante: ${timeString}`;
-
+            await message.reply(`¡Hecho, mi pana! Canal #${nombreCanal} creado con éxito 🗿`);
+        }
+    } else {
+        // Si no usó ninguna herramienta, responde con su texto normal y los créditos
+        let text = response.text();
+        text += `\n\n_te quedan ${remainingRequests}/${MAX_REQUESTS}, tiempo restante: ${timeString}_`;
         await message.reply(text);
+    }
 
     } catch (error) {
         console.error("EL ERROR REAL ES:", error);
