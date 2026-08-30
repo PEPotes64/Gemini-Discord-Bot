@@ -47,6 +47,24 @@ client.once('ready', () => {
     console.log(`¡Pana-Bot D-9 conectado como ${client.user.tag}!`);
 });
 
+// Arriba, junto a tus otras constantes globales:
+const tools = [{
+    functionDeclarations: [
+        {
+            name: "crearCanalTexto",
+            description: "Crea un nuevo canal de texto en el servidor de Discord, opcionalmente dentro de una categoría.",
+            parameters: {
+                type: "OBJECT",
+                properties: {
+                    nombre: { type: "STRING", description: "El nombre que tendrá el canal de texto." },
+                    categoria: { type: "STRING", description: "El nombre exacto de la categoría donde se colocará el canal." }
+                },
+                required: ["nombre"]
+            }
+        }
+    ]
+}];
+
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
     if (!message.content.includes(client.user.id)) return;
@@ -72,23 +90,6 @@ client.on('messageCreate', async (message) => {
                 const usernameKey = message.author.username.toLowerCase();
         const descripcionPana = perfilesPanas[usernameKey] || "Es un miembro casual del servidor de amigos.";
         const apodoServidor = message.member ? message.member.displayName : message.author.username;
-
-const tools = [{
-    functionDeclarations: [
-        {
-            name: "crearCanalTexto",
-            description: "Crea un nuevo canal de texto en el servidor de Discord, opcionalmente dentro de una categoría.",
-            parameters: {
-                type: "OBJECT",
-                properties: {
-                    nombre: { type: "STRING", description: "El nombre que tendrá el canal de texto." },
-                    categoria: { type: "STRING", description: "El nombre exacto de la categoría donde se colocará el canal (opcional)." }
-                },
-                required: ["nombre"]
-            }
-        }
-    ]
-}];
       
 const model = genAI.getGenerativeModel({
     model: 'gemini-3.5-flash',
