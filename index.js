@@ -19,7 +19,7 @@ const perfilesPanas = {
     "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respue"
 };
 
-// Declaración global de herramientas fuera de todo evento
+// Declaración global de herramientas (Crear y Eliminar canales)
 const tools = [
     {
         functionDeclarations: [
@@ -31,6 +31,17 @@ const tools = [
                     properties: {
                         nombre: { type: "STRING", description: "El nombre que tendrá el canal de texto." },
                         categoria: { type: "STRING", description: "El nombre exacto de la categoría donde se colocará el canal." }
+                    },
+                    required: ["nombre"]
+                }
+            },
+            {
+                name: "eliminarCanal",
+                description: "Elimina un canal de texto o voz del servidor de Discord buscando su nombre.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        nombre: { type: "STRING", description: "El nombre exacto o parte del nombre del canal que se quiere eliminar." }
                     },
                     required: ["nombre"]
                 }
@@ -94,7 +105,7 @@ client.on('messageCreate', async (message) => {
         const apodoServidor = message.member ? message.member.displayName : message.author.username;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-1.5-flash',
             tools: tools, 
             systemInstruction: 'Eres Pana-Bot, un asistente con permisos de administración en Discord.'
         });
@@ -139,6 +150,19 @@ Mensaje: "${contenidoLimpio}"`;
                 });
 
                 await message.reply(`¡Hecho, mi pana! Canal #${nombreCanal} creado con éxito ${parentId ? 'en su respectiva categoría 🗿' : 'suelto porque no hallé la categoría 🗿'}`);
+            } 
+            else if (call.name === "eliminarCanal") {
+                const nombreCanalBuscado = call.args.nombre.toLowerCase();
+                const canalAEliminar = message.guild.channels.cache.find(
+                    c => c.name.toLowerCase().includes(nombreCanalBuscado)
+                );
+
+                if (canalAEliminar) {
+                    await canalAEliminar.delete();
+                    await message.reply(`¡Ala, chingo a su madre el canal #${canalAEliminar.name}! Borrado con éxito 🗿`);
+                } else {
+                    await message.reply(`Puchis, no encontré ningún canal que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
+                }
             }
         } else {
             let text = response.text();
@@ -158,4 +182,4 @@ Mensaje: "${contenidoLimpio}"`;
 });
 
 client.login(process.env.DISCORD_TOKEN);
-          
+    
