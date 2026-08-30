@@ -60,7 +60,7 @@ client.on('messageCreate', async (message) => {
         const timeString = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash', // O el modelo que estés usando
+            model: 'gemini-3.5-flash', // O el modelo que estés usando
             systemInstruction: 'Eres Pana-Bot, un asistente de IA en un servidor de discord de amigos y realiza acciones y personaliza tus respuestas sabiendo quién te habla.'
         });
 
