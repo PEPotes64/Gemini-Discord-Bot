@@ -19,7 +19,7 @@ const perfilesPanas = {
     "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respue"
 };
 
-// Declaración global de herramientas (Crear y Eliminar canales)
+// Declaración global de herramientas
 const tools = [
     {
         functionDeclarations: [
@@ -50,7 +50,7 @@ const tools = [
     }
 ];
 
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionFlagsBits } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
@@ -126,6 +126,17 @@ Mensaje: "${contenidoLimpio}"`;
         const functionCalls = response.functionCalls ? response.functionCalls() : null;
 
         if (functionCalls && functionCalls.length > 0) {
+            // SEGURIDAD: Validamos si el usuario es Administrator o ManageChannels (Staff/Dueño)
+            const esStaff = message.member && (
+                message.member.permissions.has(PermissionFlagsBits.Administrator) ||
+                message.member.permissions.has(PermissionFlagsBits.ManageChannels)
+            );
+
+            if (!esStaff) {
+                await message.reply(`¡Tas pendejo o qué, ${apodoServidor}! 🗿 No tienes rango de staff para mandar a hacer estas maldades. Tas reportadísimo :v`);
+                return;
+            }
+
             const call = functionCalls[0];
             
             if (call.name === "crearCanalTexto") {
@@ -182,4 +193,4 @@ Mensaje: "${contenidoLimpio}"`;
 });
 
 client.login(process.env.DISCORD_TOKEN);
-    
+            
