@@ -19,7 +19,7 @@ const perfilesPanas = {
     "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respue"
 };
 
-// Declaración global de herramientas (Canales avanzados con restricciones, Roles y Asignación)
+// Declaración global de herramientas (Canales avanzados, Roles y Asignación)
 const tools = [
     {
         functionDeclarations: [
@@ -147,7 +147,7 @@ client.on('messageCreate', async (message) => {
         const apodoServidor = message.member ? message.member.displayName : message.author.username;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-1.5-flash',
             tools: tools, 
             systemInstruction: 'Eres Pana-Bot, un asistente con permisos de administración en Discord.'
         });
@@ -155,7 +155,7 @@ client.on('messageCreate', async (message) => {
         const contenidoLimpio = message.content.replace(`<@!${client.user.id}>`, '').replace(`<@${client.user.id}>`, '').trim();
 
         const prompt = `Estás hablando con un compa del server:
-- Su username is: "${message.author.username}"
+- Su username es: "${message.author.username}"
 - SU APODO OFICIAL (Obligatorio usar este nombre para hablarle): "${apodoServidor}"
 - Su descripción: "${descripcionPana}"
 
@@ -294,7 +294,15 @@ Mensaje: "${contenidoLimpio}"`;
         } else {
             let text = response.text();
             text += `\n\n_te quedan ${remainingRequests}/${MAX_REQUESTS}, tiempo restante: ${timeString}_`;
-            await message.reply(text);
+            
+            // Protección contra textos de más de 2000 caracteres
+            if (text.length > 2000) {
+                for (let i = 0; i < text.length; i += 2000) {
+                    await message.channel.send(text.substring(i, i + 2000));
+                }
+            } else {
+                await message.reply(text);
+            }
         }
 
     } catch (error) {
@@ -303,10 +311,10 @@ Mensaje: "${contenidoLimpio}"`;
         if (error.status === 429) {
             await message.reply("Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva");
         } else {
-            await message.reply(`Life gous on onioninoninonioni: ${error.message || error}`);
+            await message.reply(`Callate pendejo, por esto eres un naco y estupido: ${error.message || error}`);
         }
     }
 });
 
 client.login(process.env.DISCORD_TOKEN);
-                                
+                        
