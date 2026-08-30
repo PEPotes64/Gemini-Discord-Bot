@@ -94,7 +94,7 @@ client.on('messageCreate', async (message) => {
         const apodoServidor = message.member ? message.member.displayName : message.author.username;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-3.5-flash',
             tools: tools, 
             systemInstruction: 'Eres Pana-Bot, un asistente con permisos de administración en Discord.'
         });
