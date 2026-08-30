@@ -19,7 +19,7 @@ const perfilesPanas = {
     "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respue"
 };
 
-// Declaración global de herramientas (Canales y Roles)
+// Declaración global de herramientas (Canales, Roles y Asignación de Roles)
 const tools = [
     {
         functionDeclarations: [
@@ -48,13 +48,42 @@ const tools = [
             },
             {
                 name: "crearRol",
-                description: "Crea un nuevo rol en el servidor de Discord con un nombre opcional.",
+                description: "Crea un nuevo rol en el servidor de Discord con un nombre, color hexadecimal opcional y permisos opcionales.",
                 parameters: {
                     type: "OBJECT",
                     properties: {
-                        nombre: { type: "STRING", description: "El nombre que tendrá el nuevo rol." }
+                        nombre: { type: "STRING", description: "El nombre que tendrá el nuevo rol." },
+                        color: { type: "STRING", description: "Código de color en formato hexadecimal (ej. #FF0000) o nombre de color." },
+                        permisos: { 
+                            type: "ARRAY", 
+                            items: { type: "STRING" }, 
+                            description: "Lista de permisos opcionales, por ejemplo: ['Administrator', 'ManageChannels', 'KickMembers', 'BanMembers']" 
+                        }
                     },
                     required: ["nombre"]
+                }
+            },
+            {
+                name: "eliminarRol",
+                description: "Elimina un rol del servidor de Discord buscando su nombre.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        nombre: { type: "STRING", description: "El nombre exacto o parte del nombre del rol que se quiere eliminar." }
+                    },
+                    required: ["nombre"]
+                }
+            },
+            {
+                name: "asignarRolMiembro",
+                description: "Asigna un rol específico a un miembro del servidor de Discord buscando el nombre del usuario y el rol.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        usuario: { type: "STRING", description: "El nombre de usuario o apodo del miembro al que se le dará el rol." },
+                        rol: { type: "STRING", description: "El nombre del rol que se le quiere asignar." }
+                    },
+                    required: ["usuario", "rol"]
                 }
             }
         ]
@@ -79,7 +108,8 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers
     ]
 });
 
@@ -188,13 +218,68 @@ Mensaje: "${contenidoLimpio}"`;
             }
             else if (call.name === "crearRol") {
                 const nombreRol = call.args.nombre;
+                const colorHex = call.args.color;
+                const listaPermisos = call.args.permisos;
                 
-                const nuevoRol = await message.guild.roles.create({
+                let opcionesRol = {
                     name: nombreRol,
                     reason: `Creado por petición de ${apodoServidor} usando a Pana-Bot 🗿`
-                });
+                };
 
-                await message.reply(`¡Quedó al centavo, mi pana! Rol **@${nuevoRol.name}** creado con éxito para hacer más desmadre en el server 🗿`);
+                if (colorHex) {
+                    opcionesRol.color = colorHex;
+                }
+
+                if (listaPermisos && Array.isArray(listaPermisos)) {
+                    let permisosFinales = [];
+                    for (const perm of listaPermisos) {
+                        if (PermissionFlagsBits[perm]) {
+                            permisosFinales.push(PermissionFlagsBits[perm]);
+                        }
+                    }
+                    opcionesRol.permissions = permisosFinales;
+                }
+
+                const nuevoRol = await message.guild.roles.create(opcionesRol);
+
+                await message.reply(`¡Quedó al centavo, mi pana! Rol **@${nuevoRol.name}** creado con éxito ${colorHex ? `con color ${colorHex}` : ''} 🗿`);
+            }
+            else if (call.name === "eliminarRol") {
+                const nombreRolBuscado = call.args.nombre.toLowerCase();
+                const rolAEliminar = message.guild.roles.cache.find(
+                    r => r.name.toLowerCase().includes(nombreRolBuscado) && r.id !== message.guild.id
+                );
+
+                if (rolAEliminar) {
+                    await rolAEliminar.delete();
+                    await message.reply(`¡Ala, chingo a su madre el rol @${rolAEliminar.name}! Borrado con éxito 🗿`);
+                } else {
+                    await message.reply(`Puchis, no encontré ningún rol que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
+                }
+            }
+            else if (call.name === "asignarRolMiembro") {
+                const nombreUsuarioBuscado = call.args.usuario.toLowerCase();
+                const nombreRolBuscado = call.args.rol.toLowerCase();
+
+                // Buscamos al miembro en el servidor
+                const miembroEncontrado = message.guild.members.cache.find(
+                    m => m.user.username.toLowerCase().includes(nombreUsuarioBuscado) || 
+                         (m.nickname && m.nickname.toLowerCase().includes(nombreUsuarioBuscado))
+                );
+
+                // Buscamos el rol en el servidor
+                const rolEncontrado = message.guild.roles.cache.find(
+                    r => r.name.toLowerCase().includes(nombreRolBuscado)
+                );
+
+                if (!miembroEncontrado) {
+                    await message.reply(`Puchis, no encontré a ningún miembro que se llame "${call.args.usuario}" en este server 🗿`);
+                } else if (!rolEncontrado) {
+                    await message.reply(`Puchis, no encontré ningún rol llamado "${call.args.rol}" para asignárselo 🗿`);
+                } else {
+                    await miembroEncontrado.roles.add(rolEncontrado);
+                    await message.reply(`¡Listo, mi pana! Le encajé el rol **@${rolEncontrado.name}** a **${miembroEncontrado.user.username}** sin pedos 🗿`);
+                }
             }
         } else {
             let text = response.text();
@@ -214,4 +299,4 @@ Mensaje: "${contenidoLimpio}"`;
 });
 
 client.login(process.env.DISCORD_TOKEN);
-                                                                             
+            
