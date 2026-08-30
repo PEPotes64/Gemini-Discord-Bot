@@ -19,7 +19,7 @@ const perfilesPanas = {
     "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respue"
 };
 
-// Declaración global de herramientas
+// Declaración global de herramientas (Canales y Roles)
 const tools = [
     {
         functionDeclarations: [
@@ -42,6 +42,17 @@ const tools = [
                     type: "OBJECT",
                     properties: {
                         nombre: { type: "STRING", description: "El nombre exacto o parte del nombre del canal que se quiere eliminar." }
+                    },
+                    required: ["nombre"]
+                }
+            },
+            {
+                name: "crearRol",
+                description: "Crea un nuevo rol en el servidor de Discord con un nombre opcional.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        nombre: { type: "STRING", description: "El nombre que tendrá el nuevo rol." }
                     },
                     required: ["nombre"]
                 }
@@ -175,6 +186,16 @@ Mensaje: "${contenidoLimpio}"`;
                     await message.reply(`Puchis, no encontré ningún canal que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
                 }
             }
+            else if (call.name === "crearRol") {
+                const nombreRol = call.args.nombre;
+                
+                const nuevoRol = await message.guild.roles.create({
+                    name: nombreRol,
+                    reason: `Creado por petición de ${apodoServidor} usando a Pana-Bot 🗿`
+                });
+
+                await message.reply(`¡Quedó al centavo, mi pana! Rol **@${nuevoRol.name}** creado con éxito para hacer más desmadre en el server 🗿`);
+            }
         } else {
             let text = response.text();
             text += `\n\n_te quedan ${remainingRequests}/${MAX_REQUESTS}, tiempo restante: ${timeString}_`;
@@ -193,4 +214,4 @@ Mensaje: "${contenidoLimpio}"`;
 });
 
 client.login(process.env.DISCORD_TOKEN);
-            
+                                                                             
