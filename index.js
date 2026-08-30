@@ -19,18 +19,19 @@ const perfilesPanas = {
     "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respue"
 };
 
-// Declaración global de herramientas (Canales, Roles y Asignación de Roles)
+// Declaración global de herramientas (Canales avanzados con restricciones, Roles y Asignación)
 const tools = [
     {
         functionDeclarations: [
             {
                 name: "crearCanalTexto",
-                description: "Crea un nuevo canal de texto en el servidor de Discord, opcionalmente dentro de una categoría.",
+                description: "Crea un nuevo canal de texto en el servidor de Discord, opcionalmente dentro de una categoría y con la opción de prohibir hablar al @everyone.",
                 parameters: {
                     type: "OBJECT",
                     properties: {
                         nombre: { type: "STRING", description: "El nombre que tendrá el canal de texto." },
-                        categoria: { type: "STRING", description: "El nombre exacto de la categoría donde se colocará el canal." }
+                        categoria: { type: "STRING", description: "El nombre exacto de la categoría donde se colocará el canal." },
+                        restringirHablar: { type: "BOOLEAN", description: "True si quieres que el @everyone no pueda enviar mensajes en este canal." }
                     },
                     required: ["nombre"]
                 }
@@ -57,7 +58,7 @@ const tools = [
                         permisos: { 
                             type: "ARRAY", 
                             items: { type: "STRING" }, 
-                            description: "Lista de permisos opcionales, por ejemplo: ['Administrator', 'ManageChannels', 'KickMembers', 'BanMembers']" 
+                            description: "Lista de permisos opcionales en inglés según Discord, por ejemplo: ['Administrator', 'SendMessages', 'Speak', 'ViewChannel', 'ManageMessages', 'KickMembers']" 
                         }
                     },
                     required: ["nombre"]
@@ -146,7 +147,7 @@ client.on('messageCreate', async (message) => {
         const apodoServidor = message.member ? message.member.displayName : message.author.username;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-3.5-flash',
+            model: 'gemini-1.5-flash',
             tools: tools, 
             systemInstruction: 'Eres Pana-Bot, un asistente con permisos de administración en Discord.'
         });
@@ -154,7 +155,7 @@ client.on('messageCreate', async (message) => {
         const contenidoLimpio = message.content.replace(`<@!${client.user.id}>`, '').replace(`<@${client.user.id}>`, '').trim();
 
         const prompt = `Estás hablando con un compa del server:
-- Su username es: "${message.author.username}"
+- Su username is: "${message.author.username}"
 - SU APODO OFICIAL (Obligatorio usar este nombre para hablarle): "${apodoServidor}"
 - Su descripción: "${descripcionPana}"
 
@@ -178,107 +179,116 @@ Mensaje: "${contenidoLimpio}"`;
                 return;
             }
 
-            const call = functionCalls[0];
-            
-            if (call.name === "crearCanalTexto") {
-                const nombreCanal = call.args.nombre;
-                const nombreCategoria = call.args.categoria;
-                
-                let parentId = null;
+            // Recorremos TODAS las funciones que la IA decidió mandar en cadena
+            for (const call of functionCalls) {
+                if (call.name === "crearCanalTexto") {
+                    const nombreCanal = call.args.nombre;
+                    const nombreCategoria = call.args.categoria;
+                    const restringirHablar = call.args.restringirHablar;
+                    
+                    let parentId = null;
 
-                if (nombreCategoria) {
-                    const categoriaEncontrada = message.guild.channels.cache.find(
-                        c => c.type === 4 && c.name.toLowerCase().includes(nombreCategoria.toLowerCase())
-                    );
-                    if (categoriaEncontrada) {
-                        parentId = categoriaEncontrada.id;
-                    }
-                }
-                
-                await message.guild.channels.create({
-                    name: nombreCanal,
-                    type: 0,
-                    parent: parentId 
-                });
-
-                await message.reply(`¡Hecho, mi pana! Canal #${nombreCanal} creado con éxito ${parentId ? 'en su respectiva categoría 🗿' : 'suelto porque no hallé la categoría 🗿'}`);
-            } 
-            else if (call.name === "eliminarCanal") {
-                const nombreCanalBuscado = call.args.nombre.toLowerCase();
-                const canalAEliminar = message.guild.channels.cache.find(
-                    c => c.name.toLowerCase().includes(nombreCanalBuscado)
-                );
-
-                if (canalAEliminar) {
-                    await canalAEliminar.delete();
-                    await message.reply(`¡Ala, chingo a su madre el canal #${canalAEliminar.name}! Borrado con éxito 🗿`);
-                } else {
-                    await message.reply(`Puchis, no encontré ningún canal que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
-                }
-            }
-            else if (call.name === "crearRol") {
-                const nombreRol = call.args.nombre;
-                const colorHex = call.args.color;
-                const listaPermisos = call.args.permisos;
-                
-                let opcionesRol = {
-                    name: nombreRol,
-                    reason: `Creado por petición de ${apodoServidor} usando a Pana-Bot 🗿`
-                };
-
-                if (colorHex) {
-                    opcionesRol.color = colorHex;
-                }
-
-                if (listaPermisos && Array.isArray(listaPermisos)) {
-                    let permisosFinales = [];
-                    for (const perm of listaPermisos) {
-                        if (PermissionFlagsBits[perm]) {
-                            permisosFinales.push(PermissionFlagsBits[perm]);
+                    if (nombreCategoria) {
+                        const categoriaEncontrada = message.guild.channels.cache.find(
+                            c => c.type === 4 && c.name.toLowerCase().includes(nombreCategoria.toLowerCase())
+                        );
+                        if (categoriaEncontrada) {
+                            parentId = categoriaEncontrada.id;
                         }
                     }
-                    opcionesRol.permissions = permisosFinales;
+                    
+                    let permissionOverwrites = [];
+                    if (restringirHablar) {
+                        permissionOverwrites.push({
+                            id: message.guild.id, // ID del rol @everyone
+                            deny: [PermissionFlagsBits.SendMessages]
+                        });
+                    }
+
+                    await message.guild.channels.create({
+                        name: nombreCanal,
+                        type: 0,
+                        parent: parentId,
+                        permissionOverwrites: permissionOverwrites
+                    });
+
+                    await message.channel.send(`¡Hecho, mi pana! Canal #${nombreCanal} creado ${restringirHablar ? 'con el @everyone calladito 🗿' : 'sin restricciones 🗿'}`);
+                } 
+                else if (call.name === "eliminarCanal") {
+                    const nombreCanalBuscado = call.args.nombre.toLowerCase();
+                    const canalAEliminar = message.guild.channels.cache.find(
+                        c => c.name.toLowerCase().includes(nombreCanalBuscado)
+                    );
+
+                    if (canalAEliminar) {
+                        await canalAEliminar.delete();
+                        await message.channel.send(`¡Ala, chingo a su madre el canal #${canalAEliminar.name}! Borrado con éxito 🗿`);
+                    } else {
+                        await message.channel.send(`Puchis, no encontré ningún canal que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
+                    }
                 }
+                else if (call.name === "crearRol") {
+                    const nombreRol = call.args.nombre;
+                    const colorHex = call.args.color;
+                    const listaPermisos = call.args.permisos;
+                    
+                    let opcionesRol = {
+                        name: nombreRol,
+                        reason: `Creado por petición de ${apodoServidor} usando a Pana-Bot 🗿`
+                    };
 
-                const nuevoRol = await message.guild.roles.create(opcionesRol);
+                    if (colorHex) {
+                        opcionesRol.color = colorHex;
+                    }
 
-                await message.reply(`¡Quedó al centavo, mi pana! Rol **@${nuevoRol.name}** creado con éxito ${colorHex ? `con color ${colorHex}` : ''} 🗿`);
-            }
-            else if (call.name === "eliminarRol") {
-                const nombreRolBuscado = call.args.nombre.toLowerCase();
-                const rolAEliminar = message.guild.roles.cache.find(
-                    r => r.name.toLowerCase().includes(nombreRolBuscado) && r.id !== message.guild.id
-                );
+                    if (listaPermisos && Array.isArray(listaPermisos)) {
+                        let permisosFinales = [];
+                        for (const perm of listaPermisos) {
+                            if (PermissionFlagsBits[perm]) {
+                                permisosFinales.push(PermissionFlagsBits[perm]);
+                            }
+                        }
+                        opcionesRol.permissions = permisosFinales;
+                    }
 
-                if (rolAEliminar) {
-                    await rolAEliminar.delete();
-                    await message.reply(`¡Ala, chingo a su madre el rol @${rolAEliminar.name}! Borrado con éxito 🗿`);
-                } else {
-                    await message.reply(`Puchis, no encontré ningún rol que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
+                    const nuevoRol = await message.guild.roles.create(opcionesRol);
+
+                    await message.channel.send(`¡Quedó al centavo, mi pana! Rol **@${nuevoRol.name}** creado con éxito ${colorHex ? `con color ${colorHex}` : ''} 🗿`);
                 }
-            }
-            else if (call.name === "asignarRolMiembro") {
-                const nombreUsuarioBuscado = call.args.usuario.toLowerCase();
-                const nombreRolBuscado = call.args.rol.toLowerCase();
+                else if (call.name === "eliminarRol") {
+                    const nombreRolBuscado = call.args.nombre.toLowerCase();
+                    const rolAEliminar = message.guild.roles.cache.find(
+                        r => r.name.toLowerCase().includes(nombreRolBuscado) && r.id !== message.guild.id
+                    );
 
-                // Buscamos al miembro en el servidor
-                const miembroEncontrado = message.guild.members.cache.find(
-                    m => m.user.username.toLowerCase().includes(nombreUsuarioBuscado) || 
-                         (m.nickname && m.nickname.toLowerCase().includes(nombreUsuarioBuscado))
-                );
+                    if (rolAEliminar) {
+                        await rolAEliminar.delete();
+                        await message.channel.send(`¡Ala, chingo a su madre el rol @${rolAEliminar.name}! Borrado con éxito 🗿`);
+                    } else {
+                        await message.channel.send(`Puchis, no encontré ningún rol que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
+                    }
+                }
+                else if (call.name === "asignarRolMiembro") {
+                    const nombreUsuarioBuscado = call.args.usuario.toLowerCase();
+                    const nombreRolBuscado = call.args.rol.toLowerCase();
 
-                // Buscamos el rol en el servidor
-                const rolEncontrado = message.guild.roles.cache.find(
-                    r => r.name.toLowerCase().includes(nombreRolBuscado)
-                );
+                    const miembroEncontrado = message.guild.members.cache.find(
+                        m => m.user.username.toLowerCase().includes(nombreUsuarioBuscado) || 
+                             (m.nickname && m.nickname.toLowerCase().includes(nombreUsuarioBuscado))
+                    );
 
-                if (!miembroEncontrado) {
-                    await message.reply(`Puchis, no encontré a ningún miembro que se llame "${call.args.usuario}" en este server 🗿`);
-                } else if (!rolEncontrado) {
-                    await message.reply(`Puchis, no encontré ningún rol llamado "${call.args.rol}" para asignárselo 🗿`);
-                } else {
-                    await miembroEncontrado.roles.add(rolEncontrado);
-                    await message.reply(`¡Listo, mi pana! Le encajé el rol **@${rolEncontrado.name}** a **${miembroEncontrado.user.username}** sin pedos 🗿`);
+                    const rolEncontrado = message.guild.roles.cache.find(
+                        r => r.name.toLowerCase().includes(nombreRolBuscado)
+                    );
+
+                    if (!miembroEncontrado) {
+                        await message.channel.send(`Puchis, no encontré a ningún miembro que se llame "${call.args.usuario}" en este server 🗿`);
+                    } else if (!rolEncontrado) {
+                        await message.channel.send(`Puchis, no encontré ningún rol llamado "${call.args.rol}" para asignárselo 🗿`);
+                    } else {
+                        await miembroEncontrado.roles.add(rolEncontrado);
+                        await message.channel.send(`¡Listo, mi pana! Le encajé el rol **@${rolEncontrado.name}** a **${miembroEncontrado.user.username}** sin pedos 🗿`);
+                    }
                 }
             }
         } else {
@@ -299,4 +309,4 @@ Mensaje: "${contenidoLimpio}"`;
 });
 
 client.login(process.env.DISCORD_TOKEN);
-            
+                                
