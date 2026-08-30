@@ -19,7 +19,7 @@ const perfilesPanas = {
     "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respue"
 };
 
-// Declaración global de herramientas (Canales avanzados, Roles y Asignación)
+// Declaración global de herramientas (Canales, Roles, Asignación e Imágenes)
 const tools = [
     {
         functionDeclarations: [
@@ -86,6 +86,17 @@ const tools = [
                     },
                     required: ["usuario", "rol"]
                 }
+            },
+            {
+                name: "crearImagen",
+                description: "Genera una imagen basada en una descripción detallada en inglés y la envía al canal de Discord.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        prompt: { type: "STRING", description: "Descripción detallada de la imagen a generar redactada en inglés." }
+                    },
+                    required: ["prompt"]
+                }
             }
         ]
     }
@@ -147,9 +158,9 @@ client.on('messageCreate', async (message) => {
         const apodoServidor = message.member ? message.member.displayName : message.author.username;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-3.5-flash',
             tools: tools, 
-            systemInstruction: 'Eres Pana-Bot, un asistente con permisos de administración en Discord.'
+            systemInstruction: 'Eres Pana-Bot, un asistente con permisos de administración y generación de imágenes en Discord.'
         });
 
         const contenidoLimpio = message.content.replace(`<@!${client.user.id}>`, '').replace(`<@${client.user.id}>`, '').trim();
@@ -168,126 +179,137 @@ Mensaje: "${contenidoLimpio}"`;
         const functionCalls = response.functionCalls ? response.functionCalls() : null;
 
         if (functionCalls && functionCalls.length > 0) {
-            // SEGURIDAD: Validamos si el usuario es Administrator o ManageChannels (Staff/Dueño)
+            // SEGURIDAD: Validamos si el usuario es Administrator o ManageChannels para acciones de admin, 
+            // pero si solo pide imagen dejamos pasar al clan o validamos staff según prefieras. 
+            // Aquí dejamos la misma validación por seguridad general.
             const esStaff = message.member && (
                 message.member.permissions.has(PermissionFlagsBits.Administrator) ||
                 message.member.permissions.has(PermissionFlagsBits.ManageChannels)
             );
 
-            if (!esStaff) {
-                await message.reply(`¡Tas pendejo o qué, ${apodoServidor}! 🗿 No tienes rango de staff para mandar a hacer estas maldades. Tas reportadísimo :v`);
-                return;
-            }
-
-            // Recorremos TODAS las funciones que la IA decidió mandar en cadena
             for (const call of functionCalls) {
-                if (call.name === "crearCanalTexto") {
-                    const nombreCanal = call.args.nombre;
-                    const nombreCategoria = call.args.categoria;
-                    const restringirHablar = call.args.restringirHablar;
+                if (call.name === "crearImagen") {
+                    const promptImagen = call.args.prompt;
+                    // Usamos una API pública de generación de imágenes por URL basada en texto
+                    const urlImagen = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptImagen)}`;
                     
-                    let parentId = null;
-
-                    if (nombreCategoria) {
-                        const categoriaEncontrada = message.guild.channels.cache.find(
-                            c => c.type === 4 && c.name.toLowerCase().includes(nombreCategoria.toLowerCase())
-                        );
-                        if (categoriaEncontrada) {
-                            parentId = categoriaEncontrada.id;
-                        }
-                    }
-                    
-                    let permissionOverwrites = [];
-                    if (restringirHablar) {
-                        permissionOverwrites.push({
-                            id: message.guild.id, // ID del rol @everyone
-                            deny: [PermissionFlagsBits.SendMessages]
-                        });
-                    }
-
-                    await message.guild.channels.create({
-                        name: nombreCanal,
-                        type: 0,
-                        parent: parentId,
-                        permissionOverwrites: permissionOverwrites
-                    });
-
-                    await message.channel.send(`¡Hecho, mi pana! Canal #${nombreCanal} creado ${restringirHablar ? 'con el @everyone calladito 🗿' : 'sin restricciones 🗿'}`);
-                } 
-                else if (call.name === "eliminarCanal") {
-                    const nombreCanalBuscado = call.args.nombre.toLowerCase();
-                    const canalAEliminar = message.guild.channels.cache.find(
-                        c => c.name.toLowerCase().includes(nombreCanalBuscado)
-                    );
-
-                    if (canalAEliminar) {
-                        await canalAEliminar.delete();
-                        await message.channel.send(`¡Ala, chingo a su madre el canal #${canalAEliminar.name}! Borrado con éxito 🗿`);
-                    } else {
-                        await message.channel.send(`Puchis, no encontré ningún canal que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
-                    }
+                    await message.channel.send(`¡Toma tu obra maestra, ${apodoServidor}! 🗿\n${urlImagen}`);
                 }
-                else if (call.name === "crearRol") {
-                    const nombreRol = call.args.nombre;
-                    const colorHex = call.args.color;
-                    const listaPermisos = call.args.permisos;
-                    
-                    let opcionesRol = {
-                        name: nombreRol,
-                        reason: `Creado por petición de ${apodoServidor} usando a Pana-Bot 🗿`
-                    };
-
-                    if (colorHex) {
-                        opcionesRol.color = colorHex;
+                else {
+                    // Si intenta usar funciones de admin sin rango, lo rebotamos
+                    if (!esStaff) {
+                        await message.reply(`¡Tas pendejo o qué, ${apodoServidor}! 🗿 No tienes rango de staff para mandar a hacer estas maldades.`);
+                        continue;
                     }
 
-                    if (listaPermisos && Array.isArray(listaPermisos)) {
-                        let permisosFinales = [];
-                        for (const perm of listaPermisos) {
-                            if (PermissionFlagsBits[perm]) {
-                                permisosFinales.push(PermissionFlagsBits[perm]);
+                    if (call.name === "crearCanalTexto") {
+                        const nombreCanal = call.args.nombre;
+                        const nombreCategoria = call.args.categoria;
+                        const restringirHablar = call.args.restringirHablar;
+                        
+                        let parentId = null;
+
+                        if (nombreCategoria) {
+                            const categoriaEncontrada = message.guild.channels.cache.find(
+                                c => c.type === 4 && c.name.toLowerCase().includes(nombreCategoria.toLowerCase())
+                            );
+                            if (categoriaEncontrada) {
+                                parentId = categoriaEncontrada.id;
                             }
                         }
-                        opcionesRol.permissions = permisosFinales;
+                        
+                        let permissionOverwrites = [];
+                        if (restringirHablar) {
+                            permissionOverwrites.push({
+                                id: message.guild.id,
+                                deny: [PermissionFlagsBits.SendMessages]
+                            });
+                        }
+
+                        await message.guild.channels.create({
+                            name: nombreCanal,
+                            type: 0,
+                            parent: parentId,
+                            permissionOverwrites: permissionOverwrites
+                        });
+
+                        await message.channel.send(`¡Hecho, mi pana! Canal #${nombreCanal} creado ${restringirHablar ? 'con el @everyone calladito 🗿' : 'sin restricciones 🗿'}`);
+                    } 
+                    else if (call.name === "eliminarCanal") {
+                        const nombreCanalBuscado = call.args.nombre.toLowerCase();
+                        const canalAEliminar = message.guild.channels.cache.find(
+                            c => c.name.toLowerCase().includes(nombreCanalBuscado)
+                        );
+
+                        if (canalAEliminar) {
+                            await canalAEliminar.delete();
+                            await message.channel.send(`¡Ala, chingo a su madre el canal #${canalAEliminar.name}! Borrado con éxito 🗿`);
+                        } else {
+                            await message.channel.send(`Puchis, no encontré ningún canal que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
+                        }
                     }
+                    else if (call.name === "crearRol") {
+                        const nombreRol = call.args.nombre;
+                        const colorHex = call.args.color;
+                        const listaPermisos = call.args.permisos;
+                        
+                        let opcionesRol = {
+                            name: nombreRol,
+                            reason: `Creado por petición de ${apodoServidor} usando a Pana-Bot 🗿`
+                        };
 
-                    const nuevoRol = await message.guild.roles.create(opcionesRol);
+                        if (colorHex) {
+                            opcionesRol.color = colorHex;
+                        }
 
-                    await message.channel.send(`¡Quedó al centavo, mi pana! Rol **@${nuevoRol.name}** creado con éxito ${colorHex ? `con color ${colorHex}` : ''} 🗿`);
-                }
-                else if (call.name === "eliminarRol") {
-                    const nombreRolBuscado = call.args.nombre.toLowerCase();
-                    const rolAEliminar = message.guild.roles.cache.find(
-                        r => r.name.toLowerCase().includes(nombreRolBuscado) && r.id !== message.guild.id
-                    );
+                        if (listaPermisos && Array.isArray(listaPermisos)) {
+                            let permisosFinales = [];
+                            for (const perm of listaPermisos) {
+                                if (PermissionFlagsBits[perm]) {
+                                    permisosFinales.push(PermissionFlagsBits[perm]);
+                                }
+                            }
+                            opcionesRol.permissions = permisosFinales;
+                        }
 
-                    if (rolAEliminar) {
-                        await rolAEliminar.delete();
-                        await message.channel.send(`¡Ala, chingo a su madre el rol @${rolAEliminar.name}! Borrado con éxito 🗿`);
-                    } else {
-                        await message.channel.send(`Puchis, no encontré ningún rol que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
+                        const nuevoRol = await message.guild.roles.create(opcionesRol);
+
+                        await message.channel.send(`¡Quedó al centavo, mi pana! Rol **@${nuevoRol.name}** creado con éxito ${colorHex ? `con color ${colorHex}` : ''} 🗿`);
                     }
-                }
-                else if (call.name === "asignarRolMiembro") {
-                    const nombreUsuarioBuscado = call.args.usuario.toLowerCase();
-                    const nombreRolBuscado = call.args.rol.toLowerCase();
+                    else if (call.name === "eliminarRol") {
+                        const nombreRolBuscado = call.args.nombre.toLowerCase();
+                        const rolAEliminar = message.guild.roles.cache.find(
+                            r => r.name.toLowerCase().includes(nombreRolBuscado) && r.id !== message.guild.id
+                        );
 
-                    const miembroEncontrado = message.guild.members.cache.find(
-                        m => m.user.username.toLowerCase().includes(nombreUsuarioBuscado) || 
-                             (m.nickname && m.nickname.toLowerCase().includes(nombreUsuarioBuscado))
-                    );
+                        if (rolAEliminar) {
+                            await rolAEliminar.delete();
+                            await message.channel.send(`¡Ala, chingo a su madre el rol @${rolAEliminar.name}! Borrado con éxito 🗿`);
+                        } else {
+                            await message.channel.send(`Puchis, no encontré ningún rol que se llame o se parezca a "${call.args.nombre}" para borrarlo 🗿`);
+                        }
+                    }
+                    else if (call.name === "asignarRolMiembro") {
+                        const nombreUsuarioBuscado = call.args.usuario.toLowerCase();
+                        const nombreRolBuscado = call.args.rol.toLowerCase();
 
-                    const rolEncontrado = message.guild.roles.cache.find(
-                        r => r.name.toLowerCase().includes(nombreRolBuscado)
-                    );
+                        const miembroEncontrado = message.guild.members.cache.find(
+                            m => m.user.username.toLowerCase().includes(nombreUsuarioBuscado) || 
+                                 (m.nickname && m.nickname.toLowerCase().includes(nombreUsuarioBuscado))
+                        );
 
-                    if (!miembroEncontrado) {
-                        await message.channel.send(`Puchis, no encontré a ningún miembro que se llame "${call.args.usuario}" en este server 🗿`);
-                    } else if (!rolEncontrado) {
-                        await message.channel.send(`Puchis, no encontré ningún rol llamado "${call.args.rol}" para asignárselo 🗿`);
-                    } else {
-                        await miembroEncontrado.roles.add(rolEncontrado);
-                        await message.channel.send(`¡Listo, mi pana! Le encajé el rol **@${rolEncontrado.name}** a **${miembroEncontrado.user.username}** sin pedos 🗿`);
+                        const rolEncontrado = message.guild.roles.cache.find(
+                            r => r.name.toLowerCase().includes(nombreRolBuscado)
+                        );
+
+                        if (!miembroEncontrado) {
+                            await message.channel.send(`Puchis, no encontré a ningún miembro que se llame "${call.args.usuario}" en este server 🗿`);
+                        } else if (!rolEncontrado) {
+                            await message.channel.send(`Puchis, no encontré ningún rol llamado "${call.args.rol}" para asignárselo 🗿`);
+                        } else {
+                            await miembroEncontrado.roles.add(rolEncontrado);
+                            await message.channel.send(`¡Listo, mi pana! Le encajé el rol **@${rolEncontrado.name}** a **${miembroEncontrado.user.username}** sin pedos 🗿`);
+                        }
                     }
                 }
             }
@@ -311,10 +333,10 @@ Mensaje: "${contenidoLimpio}"`;
         if (error.status === 429) {
             await message.reply("Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva");
         } else {
-            await message.reply(`Callate pendejo, por esto eres un naco y estupido: ${error.message || error}`);
+            await message.reply(`Life gous on onioninoninonioni: ${error.message || error}`);
         }
     }
 });
 
 client.login(process.env.DISCORD_TOKEN);
-                        
+                    
