@@ -16,7 +16,7 @@ setInterval(() => {
         "cartoontv01": "Es Juan. Es staff del server, tiene una personalidad tranquila pero comparte el humor de los demás panas, y le encanta dibujar con su avatar de pintor.",
         "itzzred777": "Es Red. Es staff del server, tiene un humor ácido e internauta, le encanta dibujar y su avatar es literalmente un color rojo.",
         "mgj019": "Es MG. Uno de los creador del server, la persona más carismática y tranquila que se conecta cada mil años. Su avatar es el Vault Boy.",
-        "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respondas en un modo bastante neutro y siempre dando alguna sugerencia útil sin que él te la pida."
+        "pepotes777": "Es Pepo. El creador, dueño del server y admin principal. Tiene un humor ácido, pero le encanta que le respondas de manera atrevida y usando modismos latinoamericanos y siempre dando alguna sugerencia útil sin que él te la pida."
     };
 
 const { Client, GatewayIntentBits } = require('discord.js');
@@ -77,18 +77,19 @@ const tools = [{
     functionDeclarations: [
         {
             name: "crearCanalTexto",
-            description: "Crea un nuevo canal de texto en el servidor de Discord.",
+            description: "Crea un nuevo canal de texto en el servidor de Discord, opcionalmente dentro de una categoría.",
             parameters: {
                 type: "OBJECT",
                 properties: {
-                    nombre: { type: "STRING", description: "El nombre que tendrá el canal de texto." }
+                    nombre: { type: "STRING", description: "El nombre que tendrá el canal de texto." },
+                    categoria: { type: "STRING", description: "El nombre exacto de la categoría donde se colocará el canal (opcional)." }
                 },
                 required: ["nombre"]
             }
         }
     ]
 }];
-
+      
 const model = genAI.getGenerativeModel({
     model: 'gemini-3.5-flash',
     tools: tools, // <-- Aquí le metemos los superpoderes
@@ -111,19 +112,32 @@ Mensaje: "${contenidoLimpio}"`;
     // Vemos si la IA quiso usar alguna herramienta
     const functionCalls = response.functionCalls ? response.functionCalls() : null;
 
-    if (functionCalls && functionCalls.length > 0) {
-        const call = functionCalls[0];
-        
-        if (call.name === "crearCanalTexto") {
+          if (call.name === "crearCanalTexto") {
             const nombreCanal = call.args.nombre;
+            const nombreCategoria = call.args.categoria;
             
-            // Creamos el canal real en el server de Discord
+            let parentId = null;
+
+            // Si la IA especificó una categoría, la buscamos en el servidor por su nombre
+            if (nombreCategoria) {
+                const categoriaEncontrada = message.guild.channels.cache.find(
+                    c => c.type === 4 && c.name.toLowerCase().includes(nombreCategoria.toLowerCase())
+                );
+                if (categoriaEncontrada) {
+                    parentId = categoriaEncontrada.id;
+                }
+            }
+            
+            // Creamos el canal pasándole el parentId si lo encontró
             await message.guild.channels.create({
                 name: nombreCanal,
-                type: 0 // Canal de texto
+                type: 0, // Canal de texto
+                parent: parentId // <--- Esto lo mete directo a la categoría
             });
 
-            await message.reply(`¡Hecho, mi pana! Canal #${nombreCanal} creado con éxito 🗿`);
+            await message.reply(`¡Hecho, mi pana! Canal #${nombreCanal} creado con éxito ${parentId ? 'en su respectiva categoría pa k te la jales ahi' : ''} 🗿`);
+          }
+        
         }
     } else {
         // Si no usó ninguna herramienta, responde con su texto normal y los créditos
