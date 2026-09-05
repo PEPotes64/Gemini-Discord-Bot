@@ -120,7 +120,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('Pana-Bot D-9 activo > < :v');
+  res.send('Pana-Bot IU-4 activo > < :v');
 });
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -144,10 +144,22 @@ client.once('ready', () => {
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
-  if (message.content.includes(client.user.id)) return;
 
-  try {
-    await message.channel.sendTyping();
+  // FILTRO ESTRICTO: Solo contesta si lo mencionan o si le están respondiendo directamente a un mensaje suyo
+  const esMencionado = message.mentions.has(client.user);
+  const esReplyASuMensaje = message.reference && message.reference.messageId;
+  
+  let esReplyDeEl = false;
+  if (esReplyASuMensaje) {
+    try {
+      const mensajeOriginal = await message.channel.messages.fetch(message.reference.messageId);
+      if (mensajeOriginal && mensajeOriginal.author.id === client.user.id) {
+        esReplyDeEl = true;
+      }
+    } catch (e) {}
+  }
+
+  if (!esMencionado && !esReplyDeEl) return;
 
     const ahora = Date.now();
     if (ahora > resetTime) {
