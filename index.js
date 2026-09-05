@@ -117,7 +117,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('Pana-Bot D-9 activo > < :v');
+  res.send('Pana-Bot IU-4.5 activo > < :v');
 });
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -178,7 +178,7 @@ client.on('messageCreate', async (message) => {
     const apodoServidor = message.member ? message.member.displayName : message.author.username;
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       tools: tools,
       systemInstruction: "Eres Pana-Bot, un asistente con permisos de administración, obtención de IDs y generación de imágenes en el servidor de Discord. Hablas con modismos guatemaltecos, usando jerga de la calle y emojis de pacman (> < :v). Eres algo malparido pero fiel a tus compas."
     });
