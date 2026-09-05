@@ -88,6 +88,18 @@ const tools = [
                 }
             },
             {
+  name: "obtenerIdRol",
+  description: "Busca un rol en el servidor por su nombre parcial o total y devuelve su ID exacto.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      nombre: { type: "STRING", description: "El nombre exacto o parte del nombre del rol que se quiere buscar." }
+    },
+    required: ["nombre"]
+  }
+},
+            
+            {
                 name: "crearImagen",
                 description: "Genera una imagen basada en una descripción detallada en inglés y la envía al canal de Discord.",
                 parameters: {
@@ -297,6 +309,17 @@ Mensaje: "${contenidoLimpio}"`;
                             m => m.user.username.toLowerCase().includes(nombreUsuarioBuscado) || 
                                  (m.nickname && m.nickname.toLowerCase().includes(nombreUsuarioBuscado))
                         );
+
+                        else if (call.name === "obtenerIdRol") {
+  const nombreRolBuscado = call.args.nombre.toLowerCase();
+  const rolEncontrado = message.guild.roles.cache.r => r.name.toLowerCase().includes(nombreRolBuscado);
+
+  if (!rolEncontrado) {
+    await message.channel.send(`¡Puchis, no encontré ningún rol que se llame o se parezca a "${call.args.nombre}", cerote!`);
+  } else {
+    await message.channel.send(`¡Sí claro! Carademierda, aquí está el rol ${rolEncontrado.name}: \`${rolEncontrado.id}\``);
+  }
+                    }
 
                         const rolEncontrado = message.guild.roles.cache.find(
                             r => r.name.toLowerCase().includes(nombreRolBuscado)
