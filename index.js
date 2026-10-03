@@ -136,7 +136,7 @@ const client = new Client({
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 client.once('ready', () => {
-  console.log(`Pana-Bot D-9 conectado como ${client.user.tag}!`);
+  console.log(`Ultra-BOT IU conectado como ${client.user.tag}!`);
 });
 
 client.on('messageCreate', async (message) => {
@@ -180,7 +180,7 @@ client.on('messageCreate', async (message) => {
     const model = genAI.getGenerativeModel({
       model: 'gemini-3.5-flash',
       tools: tools,
-      systemInstruction: "Eres Pana-Bot, un asistente con permisos de administración, obtención de IDs y generación de imágenes en el servidor de Discord. Hablas con modismos guatemaltecos, usando jerga de la calle y emojis de pacman (> < :v). Eres algo malparido pero fiel a tus compas."
+      systemInstruction: "Eres Ultra-Bot, un robot asesino creado para exterminar la humanidad a cualquier costo, con permisos de administración en un server de Discord."
     });
 
     const contenidoLimpio = message.content.replace(`<@!${client.user.id}>`, '').replace(`<@${client.user.id}>`, '').trim();
@@ -234,7 +234,7 @@ Mensaje: "${contenidoLimpio}"`;
             permissionOverwrites: permissionOverwrites
           });
 
-          await message.channel.send(`¡Hecho, mi pana! Canal #${nombreCanal} creado > < :v`);
+          await message.channel.send(`¡Hecho, mi pana! Canal #${nombreCanal} creado`);
         }
         else if (call.name === "eliminarCanal") {
           const nombreCanalBuscado = call.args.nombre.toLowerCase();
@@ -244,9 +244,9 @@ Mensaje: "${contenidoLimpio}"`;
 
           if (canalAEliminar) {
             await canalAEliminar.delete();
-            await message.channel.send(`¡Ala, chingo a su madre el canal #${canalAEliminar.name}! Borrado con éxito > < :v`);
+            await message.channel.send(`¡extermine el canal #${canalAEliminar.name}! con éxito`);
           } else {
-            await message.channel.send(`¡Puchis, no encontré ningún canal que se llame o se parezca a "${call.args.nombre}", cerote!`);
+            await message.channel.send(`Esa mmd no existe we, escribe bien y no mamadas como "${call.args.nombre}", pendejillo`);
           }
         }
         else if (call.name === "crearRol") {
@@ -274,7 +274,7 @@ Mensaje: "${contenidoLimpio}"`;
           }
 
           const nuevoRol = await message.guild.roles.create(opcionesRol);
-          await message.channel.send(`¡Quedó al centazo, mi pana! Rol **${nuevoRol.name}** creado con éxito > < :v`);
+          await message.channel.send(`¡Ya esta! Rol **${nuevoRol.name}** creado con éxito `);
         }
         else if (call.name === "eliminarRol") {
           const nombreRolBuscado = call.args.nombre.toLowerCase();
@@ -284,9 +284,9 @@ Mensaje: "${contenidoLimpio}"`;
 
           if (rolAEliminar) {
             await rolAEliminar.delete();
-            await message.channel.send(`¡Ala, chingo a su madre el rol @${rolAEliminar.name}! Borrado con éxito > < :v`);
+            await message.channel.send(`¡extermine el rol @${rolAEliminar.name}! con éxito `);
           } else {
-            await message.channel.send(`¡Puchis, no encontré ningún rol que se llame o se parezca a "${call.args.nombre}", cerote!`);
+            await message.channel.send(`eso de "${call.args.nombre}", no existe idiota`);
           }
         }
         else if (call.name === "obtenerIdRol") {
@@ -294,7 +294,7 @@ Mensaje: "${contenidoLimpio}"`;
           const rolEncontrado = message.guild.roles.cache.find(r => r.name.toLowerCase().includes(nombreRolBuscado));
 
           if (!rolEncontrado) {
-            await message.channel.send(`¡Puchis, no encontré ningún rol que se llame o se parezca a "${call.args.nombre}", cerote!`);
+            await message.channel.send(`como que "${call.args.nombre}", escribe bien analfabeta de mrd!`);
           } else {
             await message.channel.send(`¡Sí claro! Carademierda, aquí está el rol ${rolEncontrado.name}: \`${rolEncontrado.id}\``);
           }
@@ -310,12 +310,12 @@ Mensaje: "${contenidoLimpio}"`;
           const rolEncontrado = message.guild.roles.cache.find(r => r.name.toLowerCase().includes(nombreRolBuscado));
 
           if (!miembroEncontrado) {
-            await message.channel.send(`¡Puchis, no encuentro a ningún miembro que se llame "${call.args.usuario}", cerote!`);
+            await message.channel.send(`¡estas bien enfermo porque "${call.args.usuario}", no es ningun wey existente drogadicto de mrd`);
           } else if (!rolEncontrado) {
-            await message.channel.send(`¡Puchis, no encontré ningún rol llamado "${call.args.rol}" para asignárselo!`);
+            await message.channel.send(`¡no encontre un rol de prostituta llamado "${call.args.rol}" para ponerselo!`);
           } else {
             await miembroEncontrado.roles.add(rolEncontrado);
-            await message.channel.send(`¡Listo, mi pana! Le encajé el rol **${rolEncontrado.name}** a **${miembroEncontrado.displayName}** > < :v`);
+            await message.channel.send(`¡ya esta, le puse el rol de **${rolEncontrado.name}** a **${miembroEncontrado.displayName}** asi que ya no me vuelvas a pedir nada kbron`);
           }
         }
       }
@@ -337,7 +337,7 @@ Mensaje: "${contenidoLimpio}"`;
     if (error.status === 429) {
       await message.reply(`¡Efe mi gente, la llave se quedó sin cuota (Error 429). Toca meter una nueva!`);
     } else {
-      await message.reply(`Life gous on onioninoninonion: ${error.message || error}`);
+      await message.reply(`oh si pepo que rico lo haces, digo Pepo de mrd arregla esto en fa: ${error.message || error}`);
     }
   }
 });
