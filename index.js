@@ -114,8 +114,7 @@ Tienes acceso a herramientas para crear canales, roles y generar imágenes si te
         const chatUsuario = sesionesUsuarios.get(userId);
 
         // Construir el prompt individual
-        const promptFinal = `[Usuario actual: ${apodo]: ${apodoServidor}] - Mensaje: "${contenidoLimpio}"`;
-
+        const promptFinal = `[Usuario actual: ${apodoServidor}] - Mensaje: "${contenidoLimpio}"`;
         // 🛡️ ENVIAR MENSAJE A LA SESIÓN PRIVADA CON AUTO-FALLBACK
         const response = await enviarMensajeConResguardo(chatUsuario, promptFinal);
 
