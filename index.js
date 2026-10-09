@@ -38,9 +38,9 @@ client.once('ready', () => {
 // ==========================================
 async function enviarMensajeConResguardo(chatSession, mensajeTexto) {
     const modelosDisponibles = [
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-1.0-pro'
+        'gemini-,3.5-flash',
+        'gemini-3.5-pro',
+        'gemini-3.0-pro'
     ];
 
     let ultimoError = null;
@@ -97,7 +97,7 @@ client.on('messageCreate', async (message) => {
             console.log(`✨ Creando nueva burbuja mental aislada para el usuario: ${apodoServidor} (${userId})`);
             
             const model = genai.getGenerativeModel({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-3.5-flash',
                 systemInstruction: `Eres Pana-Bot, una IA con una personalidad única, camaleónica y totalmente privada para cada persona con la que hablas.
 No compartes información ni memorias de otros usuarios. 
 Conforme vayas platicando con ${apodoServidor}, debes analizar su forma de escribir, sus gustos, su nivel de humor (si le gustan las groserías, el sarcasmo o ser directo) y adaptar tu forma de ser específicamente para encajar con él de forma natural, como si fueras un amigo personal exclusivo suyo.
